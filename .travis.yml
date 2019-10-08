@@ -1,0 +1,23 @@
+language: generic
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t dingliu/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true dingliu/react-test npm test
+
+after_success:
+  - docker build -t dingliu/multi-client ./client
+  - docker build -t dingliu/multi-nginx ./nginx
+  - docker build -t dingliu/multi-server ./server
+  - docker build -t dingliu/multi-worker ./worker
+  # Login to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take images and push them to docker hub
+  - docker push dingliu/multi-client
+  - docker push dingliu/multi-nginx
+  - docker push dingliu/multi-server
+  - docker push dingliu/multi-worker
